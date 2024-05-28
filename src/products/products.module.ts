@@ -13,7 +13,7 @@ import { envs } from 'src/config';
         transport: Transport.TCP,
         options: {
           host: envs.prodcutsMicroserviceHost,
-          port: 3001
+          port: envs.prodcutsMicroservicePort
         } 
       },
     ]),
