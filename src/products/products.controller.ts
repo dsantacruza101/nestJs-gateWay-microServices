@@ -2,7 +2,7 @@ import { BadRequestException, Body, Controller, Delete, Get, Inject, Param, Pars
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError, firstValueFrom, throwError } from 'rxjs';
 import { PaginationDto } from 'src/common';
-import { PRODUCT_SERVICE } from 'src/config';
+import { NATS_SERVICE } from 'src/config';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
@@ -10,12 +10,12 @@ import { UpdateProductDto } from './dto/update-product.dto';
 export class ProductsController {
 
   constructor(
-    @Inject(PRODUCT_SERVICE) private readonly productsClient: ClientProxy,
+    @Inject(NATS_SERVICE) private readonly client: ClientProxy,
   ) { }
 
   @Post()
   async createProduct(@Body() createProductDto: CreateProductDto) {
-    const newProduct = await firstValueFrom(this.productsClient.send(
+    const newProduct = await firstValueFrom(this.client.send(
       { cmd: 'create_product ' },
       createProductDto
     ).pipe(
@@ -29,7 +29,7 @@ export class ProductsController {
   async findOne(@Param('id', ParseIntPipe) id: number) {
 
     // Manejo de error con Observables
-    const product = await firstValueFrom(this.productsClient.send({ cmd: 'find_one_product' }, { id: id }).pipe(
+    const product = await firstValueFrom(this.client.send({ cmd: 'find_one_product' }, { id: id }).pipe(
       catchError(err => throwError(() => new RpcException(err)))
     ));
 
@@ -51,7 +51,7 @@ export class ProductsController {
   @Get()
   async findAllProducts(@Query() paginationDto: PaginationDto) {
 
-    const allProducts = await firstValueFrom(this.productsClient.send(
+    const allProducts = await firstValueFrom(this.client.send(
       { cmd: 'find_all_products' },
       paginationDto,
     ).pipe(
@@ -71,7 +71,7 @@ export class ProductsController {
     @Param('id', ParseIntPipe) id: number, 
     @Body() updateProductDto: UpdateProductDto) {
     
-    const updateProduct = await firstValueFrom(this.productsClient.send(
+    const updateProduct = await firstValueFrom(this.client.send(
       { cmd: 'update_product' },
       { id,
         ...updateProductDto
@@ -89,8 +89,8 @@ export class ProductsController {
     //   catchError(err => throwError(() => new RpcException(err)))
     // )
 
-    const deleteProduct = await firstValueFrom(this.productsClient.send(
-      { cms: 'delete_product' }, 
+    const deleteProduct = await firstValueFrom(this.client.send(
+      { cmd: 'delete_product' }, 
       {id: id}).pipe(
       catchError( err => throwError(() => new RpcException(err)))
     ));
